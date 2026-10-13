@@ -47,7 +47,7 @@ class MockData {
       reviewCount: 38,
       badge: 'Bestseller Creek',
       imageUrl:
-          'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=900&q=80',
+          'https://storage.googleapis.com/images_gave/istockphoto-1980276924-612x612.jpg',
       description:
           'Le Scorch est le kayak de creek ultime conçu pour garder sa vitesse sur les chutes et traverser les rouleaux puissants sans dévier. Rocker agressif et stabilité secondaire exceptionnelle.',
       specs: [
@@ -69,7 +69,7 @@ class MockData {
       reviewCount: 24,
       badge: 'Freestyle Pro',
       imageUrl:
-          'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=900&q=80',
+          'https://evosailing.com/img/p/1/0/3/8/9/10389.jpg',
       description:
           'Une machine à figures. Pointes taillées pour les loops aériens, cartwheels et cartouches rapides dans la vague du gave. Siège ergonomique Sweet Cheeks ultra-confort.',
       specs: [
@@ -90,7 +90,7 @@ class MockData {
       reviewCount: 19,
       badge: 'Guide de Rivière',
       imageUrl:
-          'https://images.unsplash.com/photo-1530866495561-507c9faab2ed?auto=format&fit=crop&w=900&q=80',
+          'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/25/f5/37/59/nubilato-al-top.jpg?w=500&h=400&s=1',
       description:
           'Raft autovideur conçu pour les équipages de 5 à 7 personnes. Tissu ultra-résistant Nitrilon résistant aux chocs sur rochers et aux frottements violents.',
       specs: [
@@ -112,7 +112,7 @@ class MockData {
       reviewCount: 42,
       badge: 'Équipement Club',
       imageUrl:
-          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80',
+          'https://www.club-shop.fr/65513-thickbox_default/pagaie-raft-club-1.jpg',
       description:
           'Lot de 6 pagaies simples de rafting ultra-robustes. Manche en duralumin anodisé avec grip thermoformé et pale en polyéthylène injecté résistant à l’impact.',
       specs: [
@@ -133,7 +133,7 @@ class MockData {
       reviewCount: 31,
       badge: 'Légende Rivière',
       imageUrl:
-          'https://images.unsplash.com/photo-1508873696983-2df5293cb32f?auto=format&fit=crop&w=900&q=80',
+          'https://weadventures.fr/wp-content/smush-webp/sites/142/2026/10/WA-tct-7-768x472.jpg.webp',
       description:
           'Le canoë canadien de référence pour les balades et bivouacs en rivière. Fabriqué en matériau Three-Layer Polyethylene indestructible avec assises en nylon tressé confortables.',
       specs: [
@@ -154,7 +154,7 @@ class MockData {
       reviewCount: 56,
       badge: 'Polyvalent Famille',
       imageUrl:
-          'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80',
+          'https://cdn.store-factory.com/www.kayakarmor.fr/content/pdtimg_3947086b.jpg?v=1531127129',
       description:
           'Canoë gonflable spacieux pour deux adultes et un enfant. Coque profilée avec dérive amovible pour une excellente tenue de cap sur rivière calme et lac.',
       specs: [
@@ -175,7 +175,7 @@ class MockData {
       reviewCount: 67,
       badge: 'Norme ISO 12402',
       imageUrl:
-          'https://images.unsplash.com/photo-1516762689617-e1cffcef479d?auto=format&fit=crop&w=900&q=80',
+          'https://www.bekayak.com/38235-pdt_540/gilet-securite-moniteur-kayak-extrem-chili-palm.jpg',
       description:
           'Gilet d’aide à la flottabilité pour kayakistes de rivière et guides de rafting. Équipé d’un largueur de sécurité rapide, sangle de poitrine et poches VHF/mousqueton.',
       specs: [
@@ -196,7 +196,7 @@ class MockData {
       reviewCount: 29,
       badge: 'Protection Choc',
       imageUrl:
-          'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=900&q=80',
+          'https://pegatin.com/blog/wp-content/uploads/2026/08/kayak-helmet-name-stickers-hero-upload-1024x682.jpg',
       description:
           'Conçu par des ingénieurs et médecins de traumatologie sportive. Coque multicouche avec sous-calotte EVA et protège-oreilles amovibles pour parer les blocs rocheux.',
       specs: [
@@ -217,7 +217,7 @@ class MockData {
       reviewCount: 52,
       badge: 'Indispensable',
       imageUrl:
-          'https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&w=900&q=80',
+          'https://media.discordapp.net/attachments/1559222258839453800/1559582649377362013/corde-compact-a-lancer-flottante-kayak-arc-125m-throwline-palm.png?ex=6acf9a07&is=6ace4887&hm=65f45c0aa6fe8b4ad647e3c901ec7f1e57fe7157940b5c64a35259f6261f79f3&=&format=webp&quality=lossless',
       description:
           'Sac de sauvetage à lancer avec corde flottante haute visibilité de 11 mm. Résistance à la rupture de 10 kN, col conique pour un rembobinage rapide au bord des courants.',
       specs: [
@@ -238,7 +238,7 @@ class MockData {
       reviewCount: 88,
       badge: 'Performance Légère',
       imageUrl:
-          'https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=900&q=80',
+          'https://www.expemag.com/media/show/59314b3be4b0e05fbe4a76c6.jpg',
       description:
           'La référence mondiale pour pagayer fort et précis. Pales asymétriques en carbone compressé offrant une relance nerveuse sans fatigue articulaire dans les vagues.',
       specs: [
@@ -258,7 +258,7 @@ class MockData {
       reviewCount: 15,
       badge: 'Navigation Hiver',
       imageUrl:
-          'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=900&q=80',
+          'https://cdn1.comptoirnautique.com/165724-large_default/combinaison-seche-sea-kayak-homme.jpg',
       description:
           'Combinaison sèche intégrale 3 couches respirante avec manchons latex et chaussettes intégrées. Conçue pour pagayer au chaud même dans les eaux de fonte pyrénéennes.',
       specs: [
@@ -278,7 +278,7 @@ class MockData {
       reviewCount: 34,
       badge: '100% Imperméable',
       imageUrl:
-          'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80',
+          'https://bivouacamp.com/cdn/shop/files/sac-etanche-bivouac-avec-bretelles-117889.jpg?v=1742043314&width=800',
       description:
           'Grand sac d’expédition étanche IP67 avec bretelles de portage sac à dos amovibles et roulettes tout-terrain pour le transport de tout votre équipement au camp de base.',
       specs: [
