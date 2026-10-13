@@ -9,7 +9,6 @@ import 'widgets/footer.dart';
 import 'widgets/hero_banner.dart';
 import 'widgets/navbar.dart';
 import 'widgets/product_card.dart';
-import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
