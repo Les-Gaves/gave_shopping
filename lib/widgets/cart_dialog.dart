@@ -5,13 +5,19 @@ class CartDialog extends StatelessWidget {
   const CartDialog({super.key});
 
   static void show(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
+  showDialog(
+    context: context,
+    builder: (context) => Dialog(
       backgroundColor: Colors.transparent,
-      builder: (context) => const CartDialog(),
-    );
-  }
+      elevation: 0,
+      insetPadding: const EdgeInsets.all(16),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: const CartDialog(),
+      ),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -19,18 +25,15 @@ class CartDialog extends StatelessWidget {
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: mediaQuery.size.height * 0.85,
-        maxWidth: 520,
+        maxHeight: mediaQuery.size.height * 0.80,
       ),
-      margin: EdgeInsets.only(
-        left: mediaQuery.size.width > 540 ? (mediaQuery.size.width - 520) / 2 : 0,
-        right: mediaQuery.size.width > 540 ? (mediaQuery.size.width - 520) / 2 : 0,
-      ),
-      decoration: const BoxDecoration(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Header
           Container(
@@ -60,29 +63,43 @@ class CartDialog extends StatelessWidget {
           ),
 
           // Items list
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                _cartItem(
-                  'Pyranha Scorch Creek M',
-                  'Kayak Creek Classe IV-V',
-                  '1 390.00 €',
-                  Icons.kayaking_rounded,
-                ),
-                _cartItem(
-                  'Gilet Sauveteur HF Serpent 70N',
-                  'Norme ISO 12402 • Taille L/XL',
-                  '195.00 €',
-                  Icons.shield_rounded,
-                ),
-                _cartItem(
-                  'Pagaie Carbone Werner Player R30',
-                  'Manche ergonomique 197cm',
-                  '415.00 €',
-                  Icons.waves_rounded,
-                ),
-              ],
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        _cartItem(
+                          'Pyranha Scorch Creek M',
+                          'Kayak Creek Classe IV-V',
+                          '1 390.00 €',
+                          Icons.kayaking_rounded,
+                        ),
+                        _cartItem(
+                          'Gilet Sauveteur HF Serpent 70N',
+                          'Norme ISO 12402 • Taille L/XL',
+                          '195.00 €',
+                          Icons.shield_rounded,
+                        ),
+                        _cartItem(
+                          'Pagaie Carbone Werner Player R30',
+                          'Manche ergonomique 197cm',
+                          '415.00 €',
+                          Icons.waves_rounded,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Le Container "Summary & Checkout" existant, collé ici, inchangé
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    /* ... */
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -94,6 +111,7 @@ class CartDialog extends StatelessWidget {
               border: const Border(top: BorderSide(color: Color(0xFFE2E8F0))),
             ),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 _summaryRow('Sous-total', '2 000.00 €'),
                 const SizedBox(height: 6),
