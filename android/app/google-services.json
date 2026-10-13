@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "190425491239",
+    "project_id": "gave-64",
+    "storage_bucket": "gave-64.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:190425491239:android:6776550c43df90be86ab02",
+        "android_client_info": {
+          "package_name": "com.example.gave_shopping"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD3nYZV2PwVDfotT0-C9kMeKXgvZjyWTi4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
