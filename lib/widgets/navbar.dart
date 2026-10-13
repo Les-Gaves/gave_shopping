@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../pages/login_page.dart';
 
 class StoreNavBar extends StatelessWidget implements PreferredSizeWidget {
   final String activeCategory;
@@ -187,6 +189,10 @@ class StoreNavBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
               ],
             ),
+
+            _accountButton(context, isDesktop),
+            const SizedBox(width: 8),
+
           ],
         ),
       ),
@@ -223,6 +229,55 @@ class StoreNavBar extends StatelessWidget implements PreferredSizeWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _accountButton(BuildContext context, bool isDesktop) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        final user = snapshot.data;
+
+        if (user == null) {
+          void openLogin() => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+              );
+          return isDesktop
+              ? TextButton.icon(
+                  onPressed: openLogin,
+                  icon: const Icon(Icons.person_outline, size: 20),
+                  label: const Text('Se connecter'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.riverDark,
+                  ),
+                )
+              : IconButton(
+                  tooltip: 'Se connecter',
+                  icon: const Icon(Icons.person_outline,
+                      color: AppTheme.riverDark),
+                  onPressed: openLogin,
+                );
+        }
+
+        return PopupMenuButton<String>(
+          tooltip: user.email ?? 'Compte',
+          icon: const Icon(Icons.account_circle, color: AppTheme.riverPrimary),
+          onSelected: (value) {
+            if (value == 'logout') FirebaseAuth.instance.signOut();
+          },
+          itemBuilder: (context) => [
+            PopupMenuItem<String>(
+              enabled: false,
+              child: Text(user.email ?? 'Connecté'),
+            ),
+            const PopupMenuDivider(),
+            const PopupMenuItem<String>(
+              value: 'logout',
+              child: Text('Se déconnecter'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
