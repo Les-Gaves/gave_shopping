@@ -1,122 +1,298 @@
 import 'package:flutter/material.dart';
+import 'data/mock_data.dart';
+import 'models/product.dart';
+import 'theme/app_theme.dart';
+import 'widgets/cart_dialog.dart';
+import 'widgets/category_bar.dart';
+import 'widgets/features_section.dart';
+import 'widgets/footer.dart';
+import 'widgets/hero_banner.dart';
+import 'widgets/navbar.dart';
+import 'widgets/product_card.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const GaveApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class GaveApp extends StatelessWidget {
+  const GaveApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      title: 'GAVE • Boutique Eaux Vives (Kayak, Rafting, Canoë)',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      home: const HomePage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _HomePageState extends State<HomePage> {
+  String _selectedCategory = 'tous';
+  String _searchQuery = '';
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _catalogKey = GlobalKey();
 
-  void _incrementCounter() {
+  List<Product> get _filteredProducts {
+    return MockData.products.where((product) {
+      final matchesCategory =
+          _selectedCategory == 'tous' || product.category == _selectedCategory;
+      final matchesSearch = _searchQuery.isEmpty ||
+          product.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          product.brand.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          product.description.toLowerCase().contains(_searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    }).toList();
+  }
+
+  void _scrollToCatalog() {
+    final context = _catalogKey.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void _selectCategory(String categoryId) {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _selectedCategory = categoryId;
+      _searchQuery = '';
     });
+    _scrollToCatalog();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final screenWidth = MediaQuery.of(context).size.width;
+    final int crossAxisCount;
+    if (screenWidth >= 1200) {
+      crossAxisCount = 4;
+    } else if (screenWidth >= 880) {
+      crossAxisCount = 3;
+    } else if (screenWidth >= 560) {
+      crossAxisCount = 2;
+    } else {
+      crossAxisCount = 1;
+    }
+
+    final filtered = _filteredProducts;
+
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+      appBar: StoreNavBar(
+        activeCategory: _selectedCategory,
+        onSelectCategory: _selectCategory,
+        onOpenCart: () => CartDialog.show(context),
+        onSearch: (query) {
+          setState(() {
+            _searchQuery = query;
+          });
+        },
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      body: SingleChildScrollView(
+        controller: _scrollController,
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
           children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            // Hero Banner
+            HeroBanner(
+              onExploreCatalog: _scrollToCatalog,
+              onExploreSafety: () => _selectCategory('security'),
             ),
+
+            // Main Catalog Area
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: screenWidth < 700 ? 16 : 40,
+                vertical: 32,
+              ),
+              child: Column(
+                key: _catalogKey,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Section Title Row
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: const [
+                                Icon(Icons.water_rounded, color: AppTheme.riverTeal, size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  'VITRINE DU MATÉRIEL',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    letterSpacing: 1.4,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.riverTeal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Équipements pour rivière & rapides',
+                              style: TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.w900,
+                                color: AppTheme.riverDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (screenWidth >= 650) ...[
+                        const SizedBox(width: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppTheme.riverFoam,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${filtered.length} article(s) disponible(s)',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.riverPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Category Filter Chips
+                  CategoryBar(
+                    categories: MockData.categories,
+                    selectedCategory: _selectedCategory,
+                    onSelectCategory: (catId) {
+                      setState(() {
+                        _selectedCategory = catId;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // Active search or filter notice
+                  if (_searchQuery.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Résultats pour "$_searchQuery" :',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textDark,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          TextButton(
+                            onPressed: () => setState(() => _searchQuery = ''),
+                            child: const Text('Effacer le filtre'),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Products Grid
+                  if (filtered.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(48),
+                      alignment: CenterAlignment.center,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.search_off_rounded, size: 54, color: AppTheme.textMuted),
+                          const SizedBox(height: 14),
+                          const Text(
+                            'Aucun équipement trouvé.',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Essayez de sélectionner une autre catégorie ou de modifier vos mots-clés.',
+                            style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectedCategory = 'tous';
+                                _searchQuery = '';
+                              });
+                            },
+                            child: const Text('Voir tout le matériel'),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: filtered.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 18,
+                        mainAxisSpacing: 22,
+                        childAspectRatio: crossAxisCount == 1 ? 1.25 : 0.72,
+                      ),
+                      itemBuilder: (context, index) {
+                        return ProductCard(product: filtered[index]);
+                      },
+                    ),
+
+                  const SizedBox(height: 48),
+
+                  // Brand Features Banner
+                  const FeaturesSection(),
+                ],
+              ),
+            ),
+
+            // Footer
+            StoreFooter(onSelectCategory: _selectCategory),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppTheme.riverDark,
+        foregroundColor: Colors.white,
+        onPressed: () => CartDialog.show(context),
+        icon: const Icon(Icons.shopping_bag_outlined),
+        label: const Text(
+          'Panier (3)',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
+}
+
+class CenterAlignment {
+  static const Alignment center = Alignment.center;
 }
