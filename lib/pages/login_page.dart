@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../theme/app_theme.dart';
+import 'package:sign_in_button/sign_in_button.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -55,6 +58,41 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  // Méthode de connexion avec Google
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+        _loading = true;
+        _error = null;
+    });
+
+    try {
+        if (kIsWeb) {
+        await FirebaseAuth.instance.signInWithPopup(GoogleAuthProvider());
+        } else {
+        final googleUser = await GoogleSignIn.instance.authenticate();
+
+        const scopes = ['email', 'profile'];
+        final clientAuth =
+            await googleUser.authorizationClient.authorizeScopes(scopes);
+
+        final credential = GoogleAuthProvider.credential(
+            accessToken: clientAuth.accessToken,
+            idToken: googleUser.authentication.idToken,
+        );
+        await FirebaseAuth.instance.signInWithCredential(credential);
+        }
+
+        if (mounted) Navigator.of(context).pop();
+    } on FirebaseAuthException catch (e) {
+        setState(() => _error = _messageFor(e.code));
+    } catch (e) {
+        debugPrint('Erreur Google Sign-In : $e');
+        setState(() => _error = 'Erreur lors de la connexion avec Google.');
+    } finally {
+        if (mounted) setState(() => _loading = false);
+    }
+  }
+
   Future<void> _resetPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
@@ -88,6 +126,15 @@ class _LoginPageState extends State<LoginPage> {
         return 'Problème de connexion réseau.';
       case 'too-many-requests':
         return 'Trop de tentatives. Réessayez plus tard.';
+      case 'popup-closed-by-user':
+      case 'cancelled-popup-request':
+        return 'Connexion annulée.';
+      case 'popup-blocked':
+        return 'La popup a été bloquée. Autorisez-la dans votre navigateur.';
+      case 'unauthorized-domain':
+        return "Ce domaine n'est pas autorisé dans Firebase.";
+      case 'operation-not-al lowed':
+        return "Cette méthode de connexion n'est pas activée dans Firebase.";  
       default:
         return 'Erreur : $code';
     }
@@ -212,7 +259,21 @@ class _LoginPageState extends State<LoginPage> {
                               )
                             : Text(_isLogin ? 'Se connecter' : "S'inscrire"),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
+                                          
+                      SizedBox(
+                        height: 48,
+                        child: SignInButton(
+                            Buttons.google,
+                            text: "Continuer avec Google",
+                            shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            ),
+                            onPressed: _loading ? () {} : _signInWithGoogle,
+                        ),
+                        ),
+                                            
+                        const SizedBox(height: 8),
                       TextButton(
                         onPressed: _loading
                             ? null
