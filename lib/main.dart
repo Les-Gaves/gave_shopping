@@ -11,6 +11,7 @@ import 'widgets/navbar.dart';
 import 'widgets/product_card.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'services/product_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,7 +49,7 @@ class _HomePageState extends State<HomePage> {
   final GlobalKey _catalogKey = GlobalKey();
 
   List<Product> get _filteredProducts {
-    return MockData.products.where((product) {
+    return ProductService.instance.products.where((product) {
       final matchesCategory =
           _selectedCategory == 'tous' || product.category == _selectedCategory;
       final matchesSearch = _searchQuery.isEmpty ||
@@ -79,7 +80,16 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    ProductService.instance.addListener(_onProductsChanged);
+  }
+
+  void _onProductsChanged() => setState(() {});
+
+  @override
   void dispose() {
+    ProductService.instance.removeListener(_onProductsChanged);
     _scrollController.dispose();
     super.dispose();
   }
@@ -228,7 +238,7 @@ class _HomePageState extends State<HomePage> {
                   if (filtered.isEmpty)
                     Container(
                       padding: const EdgeInsets.all(48),
-                      alignment: CenterAlignment.center,
+                      alignment: Alignment.center,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -297,8 +307,4 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-}
-
-class CenterAlignment {
-  static const Alignment center = Alignment.center;
 }

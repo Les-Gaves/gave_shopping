@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../pages/login_page.dart';
+import '../pages/add_article_page.dart';
+import '../services/auth_service.dart';
 
 class StoreNavBar extends StatelessWidget implements PreferredSizeWidget {
   final String activeCategory;
@@ -259,23 +261,46 @@ class StoreNavBar extends StatelessWidget implements PreferredSizeWidget {
                 );
         }
 
-        return PopupMenuButton<String>(
-          tooltip: user.email ?? 'Compte',
-          icon: const Icon(Icons.account_circle, color: AppTheme.riverPrimary),
-          onSelected: (value) {
-            if (value == 'logout') FirebaseAuth.instance.signOut();
+        return FutureBuilder<bool>(
+          future: AuthService.isAdmin(),
+          builder: (context, adminSnapshot) {
+            final isAdmin = adminSnapshot.data ?? false;
+
+            return PopupMenuButton<String>(
+              tooltip: user.email ?? 'Compte',
+              icon: const Icon(Icons.account_circle, color: AppTheme.riverPrimary),
+              onSelected: (value) {
+                if (value == 'logout') FirebaseAuth.instance.signOut();
+                if (value == 'add_article') {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AddArticlePage()),
+                  );
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem<String>(
+                  enabled: false,
+                  child: Text(user.email ?? 'Connecté'),
+                ),
+                const PopupMenuDivider(),
+                if (isAdmin)
+                  const PopupMenuItem<String>(
+                    value: 'add_article',
+                    child: Row(
+                      children: [
+                        Icon(Icons.add_box_outlined, size: 18),
+                        SizedBox(width: 8),
+                        Text('Ajouter un article'),
+                      ],
+                    ),
+                  ),
+                const PopupMenuItem<String>(
+                  value: 'logout',
+                  child: Text('Se déconnecter'),
+                ),
+              ],
+            );
           },
-          itemBuilder: (context) => [
-            PopupMenuItem<String>(
-              enabled: false,
-              child: Text(user.email ?? 'Connecté'),
-            ),
-            const PopupMenuDivider(),
-            const PopupMenuItem<String>(
-              value: 'logout',
-              child: Text('Se déconnecter'),
-            ),
-          ],
         );
       },
     );
