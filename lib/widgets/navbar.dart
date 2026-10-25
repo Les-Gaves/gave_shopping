@@ -3,6 +3,7 @@ import '../theme/app_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../pages/login_page.dart';
 import '../pages/add_article_page.dart';
+import '../pages/orders_page.dart';
 import '../services/auth_service.dart';
 import '../services/cart_service.dart';
 
@@ -281,6 +282,11 @@ class StoreNavBar extends StatelessWidget implements PreferredSizeWidget {
               icon: const Icon(Icons.account_circle, color: AppTheme.riverPrimary),
               onSelected: (value) {
                 if (value == 'logout') FirebaseAuth.instance.signOut();
+                if (value == 'orders') {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const OrdersPage()),
+                  );
+                }
                 if (value == 'add_article') {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const AddArticlePage()),
@@ -293,6 +299,16 @@ class StoreNavBar extends StatelessWidget implements PreferredSizeWidget {
                   child: Text(user.email ?? 'Connecté'),
                 ),
                 const PopupMenuDivider(),
+                PopupMenuItem<String>(
+                  value: 'orders',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.receipt_long_outlined, size: 18),
+                      const SizedBox(width: 8),
+                      Text(isAdmin ? 'Toutes les commandes' : 'Mes commandes'),
+                    ],
+                  ),
+                ),
                 if (isAdmin)
                   const PopupMenuItem<String>(
                     value: 'add_article',

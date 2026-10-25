@@ -290,7 +290,8 @@ class CartDialog extends StatelessWidget {
     final navigator = Navigator.of(context);
 
     // Il faut être connecté pour commander (la commande est liée à un user_id).
-    if (FirebaseAuth.instance.currentUser == null) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
       navigator.pop();
       messenger.showSnackBar(
         const SnackBar(content: Text('Connectez-vous pour passer commande.')),
@@ -299,13 +300,15 @@ class CartDialog extends StatelessWidget {
       return;
     }
 
-    final total = cart.total;
-    await cart.checkout();
+    final order = await cart.checkout(userId: user.uid, userEmail: user.email);
 
     navigator.pop();
     messenger.showSnackBar(
       SnackBar(
-        content: Text('Commande de ${_formatPrice(total)} enregistrée !'),
+        content: Text(
+          'Commande #${order.id} de ${_formatPrice(order.totalAmount)} enregistrée ! '
+          'Retrouvez-la dans « Mes commandes ».',
+        ),
         backgroundColor: AppTheme.riverPrimary,
       ),
     );

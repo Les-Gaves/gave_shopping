@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import '../models/cart_item.dart';
+import '../models/order.dart';
 import '../models/product.dart';
+import 'order_service.dart';
 
 /// Panier de l'utilisateur.
 ///
@@ -74,11 +76,18 @@ class CartService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Valide le panier.
+  /// Valide le panier : crée une commande (statut 'pending') puis vide le panier.
   /// TODO(back) : POST /orders → le back crée la commande à partir du panier
-  /// (statut 'pending'), calcule le total et renvoie la commande créée.
-  Future<void> checkout() async {
+  /// de l'utilisateur, calcule le total et renvoie la commande créée.
+  Future<Order> checkout({required String userId, String? userEmail}) async {
+    final order = await OrderService.instance.createOrder(
+      userId: userId,
+      userEmail: userEmail,
+      items: items,
+      totalAmount: total,
+    );
     clear();
+    return order;
   }
 
   int _indexOf(Product product) =>
