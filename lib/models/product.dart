@@ -11,7 +11,8 @@ class Product {
   final String? badge;
   final String imageUrl;
   final bool inStock;
-
+  final int stock;
+ 
   const Product({
     required this.id,
     required this.name,
@@ -25,5 +26,6 @@ class Product {
     this.badge,
     required this.imageUrl,
     this.inStock = true,
+    this.stock = 10,
   });
 }
