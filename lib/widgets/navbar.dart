@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../pages/login_page.dart';
 import '../pages/add_article_page.dart';
 import '../services/auth_service.dart';
+import '../services/cart_service.dart';
 
 class StoreNavBar extends StatelessWidget implements PreferredSizeWidget {
   final String activeCategory;
@@ -168,26 +169,35 @@ class StoreNavBar extends StatelessWidget implements PreferredSizeWidget {
                   icon: const Icon(Icons.shopping_bag_outlined, color: AppTheme.riverDark),
                   onPressed: onOpenCart,
                 ),
-                Positioned(
-                  top: 6,
-                  right: 6,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: AppTheme.safetyOrange,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                    child: const Text(
-                      '3',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
+                ListenableBuilder(
+                  listenable: CartService.instance,
+                  builder: (context, _) {
+                    final count = CartService.instance.count;
+                    if (count == 0) return const SizedBox.shrink();
+                    return Positioned(
+                      top: 6,
+                      right: 6,
+                      child: IgnorePointer(
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: AppTheme.safetyOrange,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                          child: Text(
+                            count > 99 ? '99+' : '$count',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ],
             ),

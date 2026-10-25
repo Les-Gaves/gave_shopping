@@ -12,6 +12,7 @@ import 'widgets/product_card.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'services/product_service.dart';
+import 'services/cart_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -295,14 +296,17 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppTheme.riverDark,
-        foregroundColor: Colors.white,
-        onPressed: () => CartDialog.show(context),
-        icon: const Icon(Icons.shopping_bag_outlined),
-        label: const Text(
-          'Panier (3)',
-          style: TextStyle(fontWeight: FontWeight.bold),
+      floatingActionButton: ListenableBuilder(
+        listenable: CartService.instance,
+        builder: (context, _) => FloatingActionButton.extended(
+          backgroundColor: AppTheme.riverDark,
+          foregroundColor: Colors.white,
+          onPressed: () => CartDialog.show(context),
+          icon: const Icon(Icons.shopping_bag_outlined),
+          label: Text(
+            'Panier (${CartService.instance.count})',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
       ),
     );
