@@ -10,6 +10,7 @@ class FeaturesSection extends StatelessWidget {
     final isCompact = screenWidth < 760;
 
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.symmetric(vertical: 24),
       padding: EdgeInsets.symmetric(horizontal: isCompact ? 20 : 36, vertical: 36),
       decoration: BoxDecoration(
@@ -18,10 +19,12 @@ class FeaturesSection extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Section header
           const Text(
             'L’EXPÉRIENCE GAVE EN EAUX VIVES',
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w800,
