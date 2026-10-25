@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/product.dart';
+import '../services/cart_service.dart';
 import '../theme/app_theme.dart';
 
 class ProductDetailDialog extends StatelessWidget {
@@ -181,16 +182,26 @@ class ProductDetailDialog extends StatelessWidget {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                     ),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${product.name} ajouté au panier vitrine !'),
-                          backgroundColor: AppTheme.riverPrimary,
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
+                    onPressed: product.stock <= 0
+                        ? null
+                        : () {
+                            final messenger = ScaffoldMessenger.of(context);
+                            final added = CartService.instance.add(product);
+                            Navigator.of(context).pop();
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  added
+                                      ? '${product.name} ajouté au panier !'
+                                      : 'Stock insuffisant pour ${product.name}.',
+                                ),
+                                backgroundColor: added
+                                    ? AppTheme.riverPrimary
+                                    : AppTheme.safetyOrange,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
                     icon: const Icon(Icons.add_shopping_cart, size: 18),
                     label: const Text('Ajouter au panier'),
                   ),
@@ -278,18 +289,26 @@ class ProductDetailDialog extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFFE8F5E9),
+            color: product.stock > 0
+                ? const Color(0xFFE8F5E9)
+                : AppTheme.safetyOrangeLight,
             borderRadius: BorderRadius.circular(6),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(Icons.check_circle, size: 14, color: Colors.green),
-              SizedBox(width: 6),
+            children: [
+              Icon(
+                product.stock > 0 ? Icons.check_circle : Icons.cancel,
+                size: 14,
+                color: product.stock > 0 ? Colors.green : AppTheme.safetyOrange,
+              ),
+              const SizedBox(width: 6),
               Text(
-                'En stock au magasin du Gave',
+                product.stock > 0
+                    ? 'En stock (${product.stock} disponible${product.stock > 1 ? 's' : ''})'
+                    : 'Rupture de stock',
                 style: TextStyle(
-                  color: Colors.green,
+                  color: product.stock > 0 ? Colors.green : AppTheme.safetyOrange,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
