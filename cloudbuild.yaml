@@ -32,6 +32,18 @@ steps:
       - '--allow-unauthenticated'
       - '--port'
       - '8080'
+      # Scalabilité & limitation des coûts
+      - '--min-instances'
+      - '0'
+      - '--max-instances'
+      - '5'
+      - '--concurrency'
+      - '80'
+      - '--cpu-throttling'
+      - '--cpu'
+      - '1'
+      - '--memory'
+      - '512Mi'
 
 substitutions:
   _LOCATION: 'europe-west1' # ou 'europe-west9' (Paris)
