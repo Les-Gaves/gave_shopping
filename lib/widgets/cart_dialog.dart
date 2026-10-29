@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/cart_item.dart';
 import '../pages/login_page.dart';
+import '../services/api_client.dart';
 import '../services/cart_service.dart';
 import '../theme/app_theme.dart';
 
@@ -9,6 +10,8 @@ class CartDialog extends StatelessWidget {
   const CartDialog({super.key});
 
   static void show(BuildContext context) {
+    // Recharge le panier depuis le back à chaque ouverture.
+    CartService.instance.load();
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -49,7 +52,7 @@ class CartDialog extends StatelessWidget {
                   child: ListView(
                     shrinkWrap: true,
                     padding: const EdgeInsets.all(20),
-                    children: cart.items.map((item) => _cartItem(cart, item)).toList(),
+                    children: cart.items.map((item) => _cartItem(context, cart, item)).toList(),
                   ),
                 ),
                 _summary(context, cart),
@@ -91,6 +94,34 @@ class CartDialog extends StatelessWidget {
   }
 
   Widget _emptyState(BuildContext context) {
+    // Le panier est stocké en base : il faut être connecté.
+    if (FirebaseAuth.instance.currentUser == null) {
+      return Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.lock_outline, size: 48, color: AppTheme.textMuted),
+            const SizedBox(height: 12),
+            const Text(
+              'Connectez-vous pour utiliser le panier.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                final navigator = Navigator.of(context);
+                navigator.pop();
+                navigator.push(MaterialPageRoute(builder: (_) => const LoginPage()));
+              },
+              child: const Text('Se connecter'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.all(40),
       child: Column(
@@ -119,7 +150,7 @@ class CartDialog extends StatelessWidget {
     );
   }
 
-  Widget _cartItem(CartService cart, CartItem item) {
+  Widget _cartItem(BuildContext context, CartService cart, CartItem item) {
     final product = item.product;
 
     return Container(
@@ -169,7 +200,7 @@ class CartDialog extends StatelessWidget {
                   children: [
                     _qtyButton(
                       Icons.remove,
-                      () => cart.setQuantity(product, item.quantity - 1),
+                      () => _run(context, () => cart.setQuantity(product, item.quantity - 1)),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -182,7 +213,7 @@ class CartDialog extends StatelessWidget {
                     _qtyButton(
                       Icons.add,
                       item.quantity < product.stock
-                          ? () => cart.setQuantity(product, item.quantity + 1)
+                          ? () => _run(context, () => cart.setQuantity(product, item.quantity + 1))
                           : null,
                     ),
                     const Spacer(),
@@ -202,7 +233,7 @@ class CartDialog extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.delete_outline, size: 20, color: AppTheme.textMuted),
             tooltip: 'Retirer du panier',
-            onPressed: () => cart.remove(product),
+            onPressed: () => _run(context, () => cart.remove(product)),
           ),
         ],
       ),
@@ -285,13 +316,25 @@ class CartDialog extends StatelessWidget {
     );
   }
 
+  /// Lance une action sur le panier et affiche l'erreur éventuelle
+  /// (stock insuffisant, serveur injoignable…).
+  static Future<void> _run(BuildContext context, Future<void> Function() action) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await action();
+    } on ApiException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: AppTheme.safetyOrange),
+      );
+    }
+  }
+
   Future<void> _checkout(BuildContext context, CartService cart) async {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
 
     // Il faut être connecté pour commander (la commande est liée à un user_id).
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
+    if (FirebaseAuth.instance.currentUser == null) {
       navigator.pop();
       messenger.showSnackBar(
         const SnackBar(content: Text('Connectez-vous pour passer commande.')),
@@ -300,16 +343,66 @@ class CartDialog extends StatelessWidget {
       return;
     }
 
-    final order = await cart.checkout(userId: user.uid, userEmail: user.email);
+    // Le back exige une adresse de livraison (5 caractères minimum).
+    final address = await _askShippingAddress(context);
+    if (address == null) return;
 
-    navigator.pop();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          'Commande #${order.id} de ${_formatPrice(order.totalAmount)} enregistrée ! '
-          'Retrouvez-la dans « Mes commandes ».',
+    try {
+      final order = await cart.checkout(shippingAddress: address);
+      navigator.pop();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Commande #${order.id} de ${_formatPrice(order.totalAmount)} enregistrée ! '
+            'Retrouvez-la dans « Mes commandes ».',
+          ),
+          backgroundColor: AppTheme.riverPrimary,
         ),
-        backgroundColor: AppTheme.riverPrimary,
+      );
+    } on ApiException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: AppTheme.safetyOrange),
+      );
+    }
+  }
+
+  static Future<String?> _askShippingAddress(BuildContext context) {
+    final controller = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Adresse de livraison'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            autofocus: true,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              hintText: '12 allée des Rapides, 64400 Oloron-Sainte-Marie',
+              border: OutlineInputBorder(),
+            ),
+            validator: (v) => (v == null || v.trim().length < 5)
+                ? 'Saisissez une adresse complète'
+                : null,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.of(context).pop(controller.text.trim());
+              }
+            },
+            child: const Text('Valider la commande'),
+          ),
+        ],
       ),
     );
   }

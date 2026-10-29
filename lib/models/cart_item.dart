@@ -1,18 +1,28 @@
+import '../utils/json_utils.dart';
 import 'product.dart';
 
-/// Une ligne du panier : un article et sa quantité.
+/// Une ligne du panier (table `cart_items`).
 ///
-/// Correspond à la table `cart_items` (cart_id, article_id, quantity).
-/// Côté front, on garde l'article complet plutôt que son seul id,
-/// pour pouvoir afficher directement son nom, son image et son prix.
+/// [id] est l'id de la LIGNE : c'est lui qu'on utilise pour modifier
+/// la quantité (PUT /api/cart/items/:id) ou supprimer (DELETE).
 class CartItem {
+  final int? id;
   final Product product;
   final int quantity;
 
-  const CartItem({required this.product, this.quantity = 1});
+  const CartItem({this.id, required this.product, this.quantity = 1});
 
   double get subtotal => product.price * quantity;
 
-  CartItem copyWith({int? quantity}) =>
-      CartItem(product: product, quantity: quantity ?? this.quantity);
+  factory CartItem.fromJson(Map<String, dynamic> json) => CartItem(
+        id: toInt(json['id']),
+        product: Product.fromJson(json['article'] as Map<String, dynamic>),
+        quantity: toInt(json['quantity']),
+      );
+
+  CartItem copyWith({Product? product, int? quantity}) => CartItem(
+        id: id,
+        product: product ?? this.product,
+        quantity: quantity ?? this.quantity,
+      );
 }

@@ -1,3 +1,4 @@
+import '../utils/json_utils.dart';
 import 'cart_item.dart';
 
 /// Statuts possibles d'une commande (enum `order_status` de la base).
@@ -28,14 +29,18 @@ enum OrderStatus {
         return 'Remboursée';
     }
   }
+
+  static OrderStatus fromName(String? name) => OrderStatus.values.firstWhere(
+        (s) => s.name == name,
+        orElse: () => OrderStatus.pending,
+      );
 }
 
 /// Une commande (table `orders`).
 ///
-/// [items] est une copie du panier au moment de la commande : le back
-/// la renverra à partir de `cart_items` (via `cart_id`).
-/// [userEmail] n'est pas dans la table `orders`, mais le back pourra
-/// l'ajouter à la réponse pour que l'admin sache qui a commandé.
+/// Les articles viennent du panier lié à la commande (cart.cartItems).
+/// [userEmail] n'est rempli que si le back inclut l'utilisateur
+/// dans la réponse (include: { user: { select: { email: true } } }).
 class Order {
   final int id;
   final String userId;
@@ -61,15 +66,23 @@ class Order {
 
   int get itemCount => items.fold(0, (sum, item) => sum + item.quantity);
 
-  Order copyWith({OrderStatus? status, DateTime? validatedAt}) => Order(
-        id: id,
-        userId: userId,
-        userEmail: userEmail,
-        items: items,
-        status: status ?? this.status,
-        totalAmount: totalAmount,
-        shippingAddress: shippingAddress,
-        orderedAt: orderedAt,
-        validatedAt: validatedAt ?? this.validatedAt,
-      );
+  factory Order.fromJson(Map<String, dynamic> json) {
+    final cart = json['cart'] as Map<String, dynamic>?;
+    final cartItems = (cart?['cartItems'] as List?) ?? const [];
+    final user = json['user'] as Map<String, dynamic>?;
+
+    return Order(
+      id: toInt(json['id']),
+      userId: json['userId'] as String? ?? '',
+      userEmail: user?['email'] as String?,
+      items: cartItems
+          .map((item) => CartItem.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      status: OrderStatus.fromName(json['status'] as String?),
+      totalAmount: toDouble(json['totalAmount']),
+      shippingAddress: json['shippingAddress'] as String?,
+      orderedAt: toDate(json['orderedAt']) ?? DateTime.now(),
+      validatedAt: toDate(json['validatedAt']),
+    );
+  }
 }

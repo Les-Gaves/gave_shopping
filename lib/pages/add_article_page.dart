@@ -1,8 +1,14 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
-import '../models/product.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../services/api_client.dart';
 import '../services/product_service.dart';
 import '../theme/app_theme.dart';
 
+/// Formulaire de création d'article (admin).
+/// Envoie POST /api/articles (+ upload de l'image si elle est choisie).
 class AddArticlePage extends StatefulWidget {
   const AddArticlePage({super.key});
 
@@ -11,17 +17,15 @@ class AddArticlePage extends StatefulWidget {
 }
 
 class _AddArticlePageState extends State<AddArticlePage> {
-  static const _defaultImageUrl = Product.defaultImageUrl;
-
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _brandController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
   final _stockController = TextEditingController(text: '0');
-  final _imageUrlController = TextEditingController();
 
-  String? _category;
+  String? _categoryId;
+  Uint8List? _imageBytes;
+  String? _imageName;
   bool _loading = false;
   String? _error;
 
@@ -31,12 +35,20 @@ class _AddArticlePageState extends State<AddArticlePage> {
   @override
   void dispose() {
     _nameController.dispose();
-    _brandController.dispose();
     _descriptionController.dispose();
     _priceController.dispose();
     _stockController.dispose();
-    _imageUrlController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final file = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1600);
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    setState(() {
+      _imageBytes = bytes;
+      _imageName = file.name;
+    });
   }
 
   Future<void> _submit() async {
@@ -48,15 +60,14 @@ class _AddArticlePageState extends State<AddArticlePage> {
     });
 
     try {
-      final imageUrl = _imageUrlController.text.trim();
       final product = await ProductService.instance.addProduct(
         name: _nameController.text.trim(),
-        category: _category!,
-        brand: _brandController.text.trim(),
+        categoryId: int.parse(_categoryId!),
         description: _descriptionController.text.trim(),
         price: double.parse(_priceController.text.replaceAll(',', '.')),
         stock: int.parse(_stockController.text),
-        imageUrl: imageUrl.isEmpty ? _defaultImageUrl : imageUrl,
+        imageBytes: _imageBytes,
+        imageName: _imageName,
       );
 
       if (!mounted) return;
@@ -67,6 +78,8 @@ class _AddArticlePageState extends State<AddArticlePage> {
         ),
       );
       Navigator.of(context).pop();
+    } on ApiException catch (e) {
+      setState(() => _error = e.message);
     } catch (_) {
       setState(() => _error = "Impossible d'ajouter l'article. Réessayez.");
     } finally {
@@ -116,33 +129,29 @@ class _AddArticlePageState extends State<AddArticlePage> {
                       TextFormField(
                         controller: _nameController,
                         decoration: _decoration('Nom *', Icons.label_outline),
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Saisissez un nom'
-                            : null,
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Marque
-                      TextFormField(
-                        controller: _brandController,
-                        decoration: _decoration('Marque', Icons.sell_outlined),
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Saisissez un nom' : null,
                       ),
                       const SizedBox(height: 14),
 
                       // Catégorie
                       DropdownButtonFormField<String>(
-                        initialValue: _category,
+                        initialValue: _categoryId,
                         decoration: _decoration('Catégorie *', Icons.category_outlined),
                         items: _categories
-                            .map((c) => DropdownMenuItem(
-                                  value: c.id,
-                                  child: Text(c.name),
-                                ))
+                            .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
                             .toList(),
-                        onChanged: (v) => setState(() => _category = v),
-                        validator: (v) =>
-                            v == null ? 'Choisissez une catégorie' : null,
+                        onChanged: (v) => setState(() => _categoryId = v),
+                        validator: (v) => v == null ? 'Choisissez une catégorie' : null,
                       ),
+                      if (_categories.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 6),
+                          child: Text(
+                            "Aucune catégorie en base : il faut d'abord en créer côté back.",
+                            style: TextStyle(fontSize: 12, color: AppTheme.safetyOrange),
+                          ),
+                        ),
                       const SizedBox(height: 14),
 
                       // Description
@@ -160,11 +169,11 @@ class _AddArticlePageState extends State<AddArticlePage> {
                           Expanded(
                             child: TextFormField(
                               controller: _priceController,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(decimal: true),
                               decoration: _decoration('Prix TTC (€) *', Icons.euro),
                               validator: (v) {
-                                final value = double.tryParse(
-                                    (v ?? '').replaceAll(',', '.'));
+                                final value = double.tryParse((v ?? '').replaceAll(',', '.'));
                                 if (value == null) return 'Prix invalide';
                                 if (value < 0) return 'Prix négatif';
                                 return null;
@@ -190,13 +199,27 @@ class _AddArticlePageState extends State<AddArticlePage> {
                       const SizedBox(height: 14),
 
                       // Image
-                      TextFormField(
-                        controller: _imageUrlController,
-                        keyboardType: TextInputType.url,
-                        decoration: _decoration(
-                          "URL de l'image (optionnel)",
-                          Icons.image_outlined,
-                        ),
+                      Row(
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: _loading ? null : _pickImage,
+                            icon: const Icon(Icons.image_outlined),
+                            label: Text(_imageBytes == null ? 'Choisir une image' : "Changer d'image"),
+                          ),
+                          const SizedBox(width: 12),
+                          if (_imageBytes != null)
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.memory(_imageBytes!, width: 56, height: 56, fit: BoxFit.cover),
+                            )
+                          else
+                            const Expanded(
+                              child: Text(
+                                'Optionnel (JPEG, PNG ou WebP)',
+                                style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                              ),
+                            ),
+                        ],
                       ),
 
                       if (_error != null) ...[
@@ -221,10 +244,7 @@ class _AddArticlePageState extends State<AddArticlePage> {
                             ? const SizedBox(
                                 height: 18,
                                 width: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                               )
                             : const Icon(Icons.add),
                         label: const Text("Ajouter l'article"),

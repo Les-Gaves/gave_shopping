@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'models/category.dart';
 import 'models/product.dart';
@@ -13,6 +16,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'services/product_service.dart';
 import 'services/cart_service.dart';
+import 'services/auth_service.dart';
+import 'services/order_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,6 +53,7 @@ class _HomePageState extends State<HomePage> {
   String _searchQuery = '';
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _catalogKey = GlobalKey();
+  StreamSubscription<User?>? _authSub;
 
   List<Product> get _filteredProducts {
     return ProductService.instance.products.where((product) {
@@ -85,6 +91,20 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     ProductService.instance.addListener(_onProductsChanged);
     ProductService.instance.loadProducts();
+
+    // À chaque connexion : synchronise l'utilisateur avec le back
+    // (POST /api/users/sync), puis charge son panier.
+    // À la déconnexion : vide le panier et les commandes affichés.
+    _authSub = FirebaseAuth.instance.authStateChanges().listen((user) async {
+      if (user == null) {
+        AuthService.clear();
+        CartService.instance.reset();
+        OrderService.instance.reset();
+      } else {
+        await AuthService.profile();
+        await CartService.instance.load();
+      }
+    });
   }
 
   /// Ouvre la catégorie « sécurité » si elle existe en base, sinon le catalogue.
@@ -104,6 +124,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    _authSub?.cancel();
     ProductService.instance.removeListener(_onProductsChanged);
     _scrollController.dispose();
     super.dispose();

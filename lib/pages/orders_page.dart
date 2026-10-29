@@ -1,23 +1,39 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/order.dart';
+import '../services/api_client.dart';
 import '../services/auth_service.dart';
 import '../services/order_service.dart';
 import '../theme/app_theme.dart';
 
-/// Historique des commandes.
-/// - Utilisateur : uniquement ses propres commandes.
-/// - Admin : toutes les commandes, avec le client et la possibilité
-///   de changer le statut.
-class OrdersPage extends StatelessWidget {
+/// Historique des commandes (GET /api/orders).
+/// C'est le back qui filtre selon le rôle :
+/// - utilisateur : uniquement ses propres commandes ;
+/// - admin : toutes les commandes, avec possibilité de changer le statut.
+class OrdersPage extends StatefulWidget {
   const OrdersPage({super.key});
+
+  @override
+  State<OrdersPage> createState() => _OrdersPageState();
+}
+
+class _OrdersPageState extends State<OrdersPage> {
+  late final Future<bool> _isAdmin = AuthService.isAdmin();
+
+  @override
+  void initState() {
+    super.initState();
+    if (FirebaseAuth.instance.currentUser != null) {
+      OrderService.instance.load();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
     return FutureBuilder<bool>(
-      future: AuthService.isAdmin(),
+      future: _isAdmin,
       builder: (context, adminSnapshot) {
         final isAdmin = adminSnapshot.data ?? false;
 
@@ -42,9 +58,20 @@ class OrdersPage extends StatelessWidget {
                   : ListenableBuilder(
                       listenable: OrderService.instance,
                       builder: (context, _) {
-                        final orders = isAdmin
-                            ? OrderService.instance.allOrders
-                            : OrderService.instance.ordersOf(user.uid);
+                        final service = OrderService.instance;
+                        final orders = service.orders;
+
+                        if (service.isLoading && orders.isEmpty) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+
+                        if (service.error != null && orders.isEmpty) {
+                          return _Message(
+                            icon: Icons.cloud_off_rounded,
+                            title: 'Impossible de charger les commandes.',
+                            subtitle: service.error!,
+                          );
+                        }
 
                         if (orders.isEmpty) {
                           return const _Message(
@@ -189,9 +216,18 @@ class _OrderCard extends StatelessWidget {
                     items: OrderStatus.values
                         .map((s) => DropdownMenuItem(value: s, child: Text(s.label)))
                         .toList(),
-                    onChanged: (status) {
-                      if (status != null) {
-                        OrderService.instance.updateStatus(order.id, status);
+                    onChanged: (status) async {
+                      if (status == null) return;
+                      final messenger = ScaffoldMessenger.of(context);
+                      try {
+                        await OrderService.instance.updateStatus(order.id, status);
+                      } on ApiException catch (e) {
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(e.message),
+                            backgroundColor: AppTheme.safetyOrange,
+                          ),
+                        );
                       }
                     },
                   ),

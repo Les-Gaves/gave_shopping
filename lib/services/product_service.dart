@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 
 import '../models/category.dart';
 import '../models/product.dart';
@@ -72,32 +75,69 @@ class ProductService extends ChangeNotifier {
     }
   }
 
-  /// TODO(étape 4) : remplacer par POST /api/articles (+ upload de l'image).
-  /// Pour l'instant, l'article n'est ajouté qu'à la liste locale.
+  /// Crée un article (admin) : POST /api/articles.
+  /// Si une image est fournie, elle est d'abord envoyée dans le bucket :
+  ///   1. POST /api/files/upload-url → URL signée + chemin
+  ///   2. PUT de l'image directement sur cette URL
+  ///   3. le chemin est transmis à la création (image_path)
+  /// Le catalogue est ensuite rechargé.
   Future<Product> addProduct({
     required String name,
-    required String category,
-    required String brand,
+    required int categoryId,
     required String description,
     required double price,
     required int stock,
-    required String imageUrl,
+    Uint8List? imageBytes,
+    String? imageName,
   }) async {
-    final product = Product(
-      id: 'local-${DateTime.now().millisecondsSinceEpoch}',
-      name: name,
-      category: category,
-      brand: brand,
-      price: price,
-      description: description,
-      badge: 'Nouveau',
-      imageUrl: imageUrl,
-      inStock: stock > 0,
-      stock: stock,
-    );
+    String? imagePath;
+    if (imageBytes != null && imageName != null) {
+      imagePath = await _uploadImage(imageBytes, imageName);
+    }
 
-    _products.insert(0, product);
-    notifyListeners();
-    return product;
+    final data = await ApiClient.post('/api/articles', body: {
+      'name': name,
+      'category_id': categoryId,
+      'description': description,
+      'price': price,
+      'stock': stock,
+      if (imagePath != null) 'image_path': imagePath,
+    });
+
+    final created = Product.fromJson(data as Map<String, dynamic>);
+    await loadProducts();
+    return created;
+  }
+
+  Future<String> _uploadImage(Uint8List bytes, String filename) async {
+    final contentType = _contentTypeOf(filename);
+    final data = await ApiClient.post('/api/files/upload-url', body: {
+      'filename': filename,
+      'content_type': contentType,
+    }) as Map<String, dynamic>;
+
+    try {
+      final response = await http.put(
+        Uri.parse(data['upload_url'] as String),
+        headers: {'Content-Type': contentType},
+        body: bytes,
+      );
+      if (response.statusCode >= 300) {
+        throw ApiException(response.statusCode, "Échec de l'envoi de l'image.");
+      }
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      // Souvent : CORS non configuré sur le bucket.
+      throw ApiException(0, "Échec de l'envoi de l'image vers le stockage.");
+    }
+    return data['path'] as String;
+  }
+
+  static String _contentTypeOf(String filename) {
+    final name = filename.toLowerCase();
+    if (name.endsWith('.png')) return 'image/png';
+    if (name.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
   }
 }
