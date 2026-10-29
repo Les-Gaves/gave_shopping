@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/product.dart';
+import '../pages/login_page.dart';
+import '../services/api_client.dart';
 import '../services/cart_service.dart';
 import '../theme/app_theme.dart';
 
@@ -33,6 +36,7 @@ class ProductDetailDialog extends StatelessWidget {
               color: AppTheme.riverDark,
               child: Row(
                 children: [
+                  if (product.brand.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
@@ -105,9 +109,9 @@ class ProductDetailDialog extends StatelessWidget {
                       ),
                     ),
 
+                    // Specs List (absentes pour les articles venant de l'API)
+                    if (product.specs.isNotEmpty) ...[
                     const SizedBox(height: 20),
-
-                    // Specs List
                     const Text(
                       'Spécifications & Homologation',
                       style: TextStyle(
@@ -143,6 +147,7 @@ class ProductDetailDialog extends StatelessWidget {
                         ),
                       ),
                     ),
+                    ],
                   ],
                 ),
               ),
@@ -184,23 +189,42 @@ class ProductDetailDialog extends StatelessWidget {
                     ),
                     onPressed: product.stock <= 0
                         ? null
-                        : () {
+                        : () async {
                             final messenger = ScaffoldMessenger.of(context);
-                            final added = CartService.instance.add(product);
-                            Navigator.of(context).pop();
-                            messenger.showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  added
-                                      ? '${product.name} ajouté au panier !'
-                                      : 'Stock insuffisant pour ${product.name}.',
+                            final navigator = Navigator.of(context);
+
+                            // Le panier est stocké en base : il faut être connecté.
+                            if (FirebaseAuth.instance.currentUser == null) {
+                              navigator.pop();
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text('Connectez-vous pour ajouter au panier.'),
                                 ),
-                                backgroundColor: added
-                                    ? AppTheme.riverPrimary
-                                    : AppTheme.safetyOrange,
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
+                              );
+                              navigator.push(
+                                MaterialPageRoute(builder: (_) => const LoginPage()),
+                              );
+                              return;
+                            }
+
+                            try {
+                              await CartService.instance.add(product);
+                              navigator.pop();
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text('${product.name} ajouté au panier !'),
+                                  backgroundColor: AppTheme.riverPrimary,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            } on ApiException catch (e) {
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(e.message),
+                                  backgroundColor: AppTheme.safetyOrange,
+                                ),
+                              );
+                            }
                           },
                     icon: const Icon(Icons.add_shopping_cart, size: 18),
                     label: const Text('Ajouter au panier'),
@@ -269,6 +293,7 @@ class ProductDetailDialog extends StatelessWidget {
             height: 1.2,
           ),
         ),
+        if (product.reviewCount > 0) ...[
         const SizedBox(height: 10),
         Row(
           children: [
@@ -285,6 +310,7 @@ class ProductDetailDialog extends StatelessWidget {
             ),
           ],
         ),
+        ],
         const SizedBox(height: 14),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

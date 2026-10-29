@@ -1,11 +1,17 @@
 
 import 'package:flutter/material.dart';
+import '../models/category.dart';
 import '../theme/app_theme.dart';
 
 class StoreFooter extends StatelessWidget {
   final Function(String) onSelectCategory;
+  final List<ProductCategory> categories;
 
-  const StoreFooter({super.key, required this.onSelectCategory});
+  const StoreFooter({
+    super.key,
+    required this.onSelectCategory,
+    this.categories = const [],
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -152,10 +158,7 @@ class StoreFooter extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        _footerLink('Kayaks de rivière & Creek', () => onSelectCategory('kayak')),
-        _footerLink('Rafts gonflables & Pagaies', () => onSelectCategory('rafting')),
-        _footerLink('Canoës d’expédition', () => onSelectCategory('canoe')),
-        _footerLink('Gilets 70N & Sécurité ISO', () => onSelectCategory('security')),
+        ...categories.map((c) => _footerLink(c.name, () => onSelectCategory(c.id))),
         _footerLink('Voir tout le matériel', () => onSelectCategory('tous')),
       ],
     );

@@ -134,17 +134,19 @@ class _ProductCardState extends State<ProductCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Brand
-                      Text(
-                        product.brand.toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                          color: AppTheme.riverTeal,
+                      // Brand (absente pour les articles venant de l'API)
+                      if (product.brand.isNotEmpty) ...[
+                        Text(
+                          product.brand.toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                            color: AppTheme.riverTeal,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
+                        const SizedBox(height: 4),
+                      ],
 
                       // Name
                       Text(
@@ -161,7 +163,17 @@ class _ProductCardState extends State<ProductCard> {
 
                       const Spacer(),
 
-                      // Rating
+                      // Rating (si l'article a des avis), sinon disponibilité
+                      if (product.reviewCount == 0)
+                        Text(
+                          product.stock > 0 ? 'En stock' : 'Rupture de stock',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: product.stock > 0 ? Colors.green : AppTheme.safetyOrange,
+                          ),
+                        )
+                      else
                       Row(
                         children: [
                           const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
