@@ -33,6 +33,7 @@ class ProductDetailDialog extends StatelessWidget {
               color: AppTheme.riverDark,
               child: Row(
                 children: [
+                  if (product.brand.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
@@ -105,9 +106,9 @@ class ProductDetailDialog extends StatelessWidget {
                       ),
                     ),
 
+                    // Specs List (absentes pour les articles venant de l'API)
+                    if (product.specs.isNotEmpty) ...[
                     const SizedBox(height: 20),
-
-                    // Specs List
                     const Text(
                       'Spécifications & Homologation',
                       style: TextStyle(
@@ -143,6 +144,7 @@ class ProductDetailDialog extends StatelessWidget {
                         ),
                       ),
                     ),
+                    ],
                   ],
                 ),
               ),
@@ -269,6 +271,7 @@ class ProductDetailDialog extends StatelessWidget {
             height: 1.2,
           ),
         ),
+        if (product.reviewCount > 0) ...[
         const SizedBox(height: 10),
         Row(
           children: [
@@ -285,6 +288,7 @@ class ProductDetailDialog extends StatelessWidget {
             ),
           ],
         ),
+        ],
         const SizedBox(height: 14),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

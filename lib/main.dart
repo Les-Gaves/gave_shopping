@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'data/mock_data.dart';
+import 'models/category.dart';
 import 'models/product.dart';
 import 'theme/app_theme.dart';
 import 'widgets/cart_dialog.dart';
@@ -84,6 +84,20 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     ProductService.instance.addListener(_onProductsChanged);
+    ProductService.instance.loadProducts();
+  }
+
+  /// Ouvre la catégorie « sécurité » si elle existe en base, sinon le catalogue.
+  void _openSafetyCategory() {
+    final safety = ProductService.instance.categories.where((c) {
+      final n = c.name.toLowerCase();
+      return n.contains('sécu') || n.contains('secu') || n.contains('gilet');
+    });
+    if (safety.isNotEmpty) {
+      _selectCategory(safety.first.id);
+    } else {
+      _scrollToCatalog();
+    }
   }
 
   void _onProductsChanged() => setState(() {});
@@ -113,6 +127,7 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: StoreNavBar(
+        categories: ProductService.instance.categories,
         activeCategory: _selectedCategory,
         onSelectCategory: _selectCategory,
         onOpenCart: () => CartDialog.show(context),
@@ -129,7 +144,7 @@ class _HomePageState extends State<HomePage> {
             // Hero Banner
             HeroBanner(
               onExploreCatalog: _scrollToCatalog,
-              onExploreSafety: () => _selectCategory('security'),
+              onExploreSafety: _openSafetyCategory,
             ),
 
             // Main Catalog Area
@@ -202,7 +217,7 @@ class _HomePageState extends State<HomePage> {
 
                   // Category Filter Chips
                   CategoryBar(
-                    categories: MockData.categories,
+                    categories: [ProductCategory.all, ...ProductService.instance.categories],
                     selectedCategory: _selectedCategory,
                     onSelectCategory: (catId) {
                       setState(() {
@@ -236,7 +251,40 @@ class _HomePageState extends State<HomePage> {
                     ),
 
                   // Products Grid
-                  if (filtered.isEmpty)
+                  if (ProductService.instance.isLoading)
+                    const Padding(
+                      padding: EdgeInsets.all(48),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (ProductService.instance.error != null)
+                    Container(
+                      padding: const EdgeInsets.all(48),
+                      alignment: Alignment.center,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.cloud_off_rounded, size: 54, color: AppTheme.textMuted),
+                          const SizedBox(height: 14),
+                          const Text(
+                            'Impossible de charger le catalogue.',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            ProductService.instance.error!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: ProductService.instance.loadProducts,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Réessayer'),
+                          ),
+                        ],
+                      ),
+                    )
+                  else if (filtered.isEmpty)
                     Container(
                       padding: const EdgeInsets.all(48),
                       alignment: Alignment.center,
@@ -292,7 +340,10 @@ class _HomePageState extends State<HomePage> {
             ),
 
             // Footer
-            StoreFooter(onSelectCategory: _selectCategory),
+            StoreFooter(
+              onSelectCategory: _selectCategory,
+              categories: ProductService.instance.categories,
+            ),
           ],
         ),
       ),

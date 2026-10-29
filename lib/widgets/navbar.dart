@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/category.dart';
 import '../theme/app_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../pages/login_page.dart';
@@ -12,9 +13,11 @@ class StoreNavBar extends StatelessWidget implements PreferredSizeWidget {
   final Function(String) onSelectCategory;
   final VoidCallback onOpenCart;
   final Function(String)? onSearch;
+  final List<ProductCategory> categories;
 
   const StoreNavBar({
     super.key,
+    this.categories = const [],
     required this.activeCategory,
     required this.onSelectCategory,
     required this.onOpenCart,
@@ -112,10 +115,7 @@ class StoreNavBar extends StatelessWidget implements PreferredSizeWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _navLink('Accueil', 'tous'),
-                      _navLink('Kayaks', 'kayak'),
-                      _navLink('Rafting', 'rafting'),
-                      _navLink('Canoës', 'canoe'),
-                      _navLink('Sécurité', 'security'),
+                      ...categories.map((c) => _navLink(c.name, c.id)),
                     ],
                   ),
                 ),

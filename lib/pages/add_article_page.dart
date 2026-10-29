@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../data/mock_data.dart';
+import '../models/product.dart';
 import '../services/product_service.dart';
 import '../theme/app_theme.dart';
 
@@ -11,8 +11,7 @@ class AddArticlePage extends StatefulWidget {
 }
 
 class _AddArticlePageState extends State<AddArticlePage> {
-  static const _defaultImageUrl =
-      'https://storage.googleapis.com/images_gave/istockphoto-1980276924-612x612.jpg';
+  static const _defaultImageUrl = Product.defaultImageUrl;
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -26,9 +25,8 @@ class _AddArticlePageState extends State<AddArticlePage> {
   bool _loading = false;
   String? _error;
 
-  // Toutes les catégories sauf "tous", qui n'est qu'un filtre d'affichage.
-  final _categories =
-      MockData.categories.where((c) => c.id != 'tous').toList();
+  // Catégories chargées depuis l'API.
+  final _categories = ProductService.instance.categories;
 
   @override
   void dispose() {
