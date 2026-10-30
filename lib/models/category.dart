@@ -9,13 +9,11 @@ class ProductCategory {
   final String id;
   final String name;
   final IconData icon;
-  final String description;
 
   const ProductCategory({
     required this.id,
     required this.name,
     required this.icon,
-    this.description = '',
   });
 
   /// Filtre « tout afficher » (n'existe pas en base).

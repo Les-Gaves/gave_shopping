@@ -73,34 +73,6 @@ class _ProductCardState extends State<ProductCard> {
                     ),
                   ),
 
-                  // Badge on top-left
-                  if (product.badge != null)
-                    Positioned(
-                      top: 10,
-                      left: 10,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.safetyOrange,
-                          borderRadius: BorderRadius.circular(6),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              blurRadius: 4,
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          product.badge!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-
                   // Favorite Heart Button on top-right
                   Positioned(
                     top: 8,
@@ -134,20 +106,6 @@ class _ProductCardState extends State<ProductCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Brand (absente pour les articles venant de l'API)
-                      if (product.brand.isNotEmpty) ...[
-                        Text(
-                          product.brand.toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: AppTheme.riverTeal,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                      ],
-
                       // Name
                       Text(
                         product.name,
@@ -163,38 +121,14 @@ class _ProductCardState extends State<ProductCard> {
 
                       const Spacer(),
 
-                      // Rating (si l'article a des avis), sinon disponibilité
-                      if (product.reviewCount == 0)
-                        Text(
-                          product.stock > 0 ? 'En stock' : 'Rupture de stock',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: product.stock > 0 ? Colors.green : AppTheme.safetyOrange,
-                          ),
-                        )
-                      else
-                      Row(
-                        children: [
-                          const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
-                          const SizedBox(width: 3),
-                          Text(
-                            '${product.rating}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textDark,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '(${product.reviewCount})',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppTheme.textMuted,
-                            ),
-                          ),
-                        ],
+                      // Disponibilité
+                      Text(
+                        product.stock > 0 ? 'En stock' : 'Rupture de stock',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: product.stock > 0 ? Colors.green : AppTheme.safetyOrange,
+                        ),
                       ),
 
                       const SizedBox(height: 8),

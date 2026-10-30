@@ -61,7 +61,6 @@ class _HomePageState extends State<HomePage> {
           _selectedCategory == 'tous' || product.category == _selectedCategory;
       final matchesSearch = _searchQuery.isEmpty ||
           product.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          product.brand.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           product.description.toLowerCase().contains(_searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     }).toList();
