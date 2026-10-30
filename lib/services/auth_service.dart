@@ -83,6 +83,28 @@ class AuthService {
     }
   }
 
+  /// Met à jour prénom, nom et téléphone : PATCH /api/users/me.
+  /// Attend d'abord la synchronisation, pour que l'utilisateur existe en base.
+  /// Une valeur vide efface le champ côté back.
+  static Future<AppUser> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? phone,
+  }) async {
+    final user = currentUser;
+    if (user == null) throw ApiException(401, 'Vous devez être connecté.');
+    await profile();
+
+    final data = await ApiClient.patch('/api/users/me', body: {
+      'first_name': ?firstName,
+      'last_name': ?lastName,
+      'phone': ?phone,
+    });
+    _profile = AppUser.fromJson(data as Map<String, dynamic>);
+    _profileUid = user.uid;
+    return _profile!;
+  }
+
   static Future<bool> isAdmin() async => (await profile())?.isAdmin ?? false;
 
   /// À appeler à la déconnexion.
