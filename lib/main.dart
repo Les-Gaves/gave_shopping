@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'models/category.dart';
 import 'models/product.dart';
+import 'config/api_config.dart';
 import 'theme/app_theme.dart';
 import 'widgets/cart_dialog.dart';
 import 'widgets/category_bar.dart';
@@ -24,6 +25,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await ApiConfig.load();
   runApp(const GaveApp());
 }
 

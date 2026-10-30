@@ -14,8 +14,12 @@ RUN flutter build web --release
 # Étape 2 : Serveur de production Nginx
 FROM nginx:alpine
 
-# Configuration Nginx optimisée pour Flutter SPA & Cloud Run
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Configuration Nginx optimisée pour Flutter SPA & Cloud Run.
+# Copiée comme template : au démarrage, l'image remplace ${API_URL} par la variable d'environnement.
+COPY nginx.conf /etc/nginx/templates/default.conf.template
+
+# Adresse de l'API back, à définir sur le service Cloud Run (vide = localhost:3000)
+ENV API_URL=""
 
 # Fichiers compilés Flutter
 COPY --from=build /app/build/web /usr/share/nginx/html
