@@ -110,7 +110,8 @@ class ProductService extends ChangeNotifier {
   }
 
   Future<String> _uploadImage(Uint8List bytes, String filename) async {
-    final contentType = _contentTypeOf(filename);
+    final contentType = contentTypeOf(filename);
+    if (contentType == null) throw ApiException(400, unsupportedImageMessage);
     final data = await ApiClient.post('/api/files/upload-url', body: {
       'filename': filename,
       'content_type': contentType,
@@ -134,10 +135,15 @@ class ProductService extends ChangeNotifier {
     return data['path'] as String;
   }
 
-  static String _contentTypeOf(String filename) {
+  static const unsupportedImageMessage =
+      "Format d'image non supporté (jpg, png, webp).";
+
+  /// Type MIME accepté par le back (jpeg, png, webp), null sinon.
+  static String? contentTypeOf(String filename) {
     final name = filename.toLowerCase();
+    if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'image/jpeg';
     if (name.endsWith('.png')) return 'image/png';
     if (name.endsWith('.webp')) return 'image/webp';
-    return 'image/jpeg';
+    return null;
   }
 }
