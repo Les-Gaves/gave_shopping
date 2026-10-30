@@ -44,10 +44,15 @@ class _AddArticlePageState extends State<AddArticlePage> {
   Future<void> _pickImage() async {
     final file = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1600);
     if (file == null) return;
+    if (ProductService.contentTypeOf(file.name) == null) {
+      setState(() => _error = ProductService.unsupportedImageMessage);
+      return;
+    }
     final bytes = await file.readAsBytes();
     setState(() {
       _imageBytes = bytes;
       _imageName = file.name;
+      _error = null;
     });
   }
 
