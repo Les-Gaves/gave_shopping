@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../services/api_client.dart';
+import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import 'package:sign_in_button/sign_in_button.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -16,6 +18,9 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _phoneController = TextEditingController();
 
   bool _isLogin = true;
   bool _loading = false;
@@ -26,6 +31,9 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -47,6 +55,7 @@ class _LoginPageState extends State<LoginPage> {
       } else {
         await FirebaseAuth.instance
             .createUserWithEmailAndPassword(email: email, password: password);
+        await _saveProfile();
       }
       if (mounted) Navigator.of(context).pop();
     } on FirebaseAuthException catch (e) {
@@ -55,6 +64,25 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _error = 'Une erreur est survenue. Réessayez.');
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  /// Enregistre nom, prénom et téléphone saisis à l'inscription
+  /// (PATCH /api/users/me). Un échec ne bloque pas l'inscription.
+  Future<void> _saveProfile() async {
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    final phone = _phoneController.text.trim();
+    if (firstName.isEmpty && lastName.isEmpty && phone.isEmpty) return;
+
+    try {
+      await AuthService.updateProfile(
+        firstName: firstName,
+        lastName: lastName,
+        phone: phone,
+      );
+    } on ApiException catch (e) {
+      debugPrint('Profil non enregistré : $e');
     }
   }
 
@@ -180,6 +208,40 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       const SizedBox(height: 24),
+                      if (!_isLogin) ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _firstNameController,
+                                textCapitalization: TextCapitalization.words,
+                                autofillHints: const [AutofillHints.givenName],
+                                decoration:
+                                    _decoration('Prénom', Icons.person_outline),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _lastNameController,
+                                textCapitalization: TextCapitalization.words,
+                                autofillHints: const [AutofillHints.familyName],
+                                decoration:
+                                    _decoration('Nom', Icons.person_outline),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          autofillHints: const [AutofillHints.telephoneNumber],
+                          decoration: _decoration(
+                              'Téléphone (facultatif)', Icons.phone_outlined),
+                        ),
+                        const SizedBox(height: 14),
+                      ],
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
